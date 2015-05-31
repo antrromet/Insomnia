@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Colors for the swipe refresh layout -->
+    <color name="swipe_refresh_grey">#242424</color>
+    <color name="swipe_refresh_blue">#33B5E5</color>
+
+</resources>

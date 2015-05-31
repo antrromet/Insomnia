@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Insomnia</string>
+
+    <!--Common-->
+    <string name="internet_problem">No internet access, please check your internet connection.</string>
+    <string name="error_parsing_feeds">There was an error parsing the feeds&#8230;Please try again</string>
+</resources>
