@@ -10,7 +10,7 @@ public class Constants {
      */
     public enum Loaders {
 
-        NINE_GAG_FEEDS(100);
+        NINE_GAG_FEEDS(100),FACEBOOK_FEEDS(101);
 
         public final int id;
 

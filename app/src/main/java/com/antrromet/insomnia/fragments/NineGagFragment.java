@@ -45,14 +45,14 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         View view = View.inflate(getActivity(), R.layout.fragment_nine_gag, null);
 
         // Setting up the Refresh Layout
-        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipeRefreshLayout);
+        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
         mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_blue, R.color
                         .swipe_refresh_grey, R.color.swipe_refresh_blue,
                 R.color.swipe_refresh_grey);
 
         // Setting up the Recycler View
-        mRecyclerView = (RecyclerView) view.findViewById(R.id.nine_gag_recycler_view);
+        mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(true);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -65,7 +65,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
 
         // Requesting new data
         setVolleyListener(this);
-        requestNewFeeds(String.valueOf(0));
+        requestFeeds(String.valueOf(0));
 
         return view;
     }
@@ -73,7 +73,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
     /**
      * Call the 9Gag feeds API
      */
-    private void requestNewFeeds(String pagingId) {
+    private void requestFeeds(String pagingId) {
 
         // Adding request to request queue only if network is available else show the error to
         // the user
@@ -253,13 +253,13 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
 
     @Override
     public void onRefresh() {
-        requestNewFeeds(String.valueOf(0));
+        requestFeeds(String.valueOf(0));
     }
 
     private void onLoadMore(){
         String nextPageId = PreferencesManager.getString(getActivity(), Constants.APP_PREFERENCES,
                 Constants.SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, String.valueOf(0));
-        requestNewFeeds(TextUtils.isEmpty(nextPageId) ? String.valueOf(0) : nextPageId);
+        requestFeeds(TextUtils.isEmpty(nextPageId) ? String.valueOf(0) : nextPageId);
     }
 
     @Override
