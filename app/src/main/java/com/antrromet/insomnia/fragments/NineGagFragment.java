@@ -110,7 +110,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
      */
     private void insertFeedsInDb(JSONObject responseObject) {
         // Parsing through the feeds
-        JSONArray feedsArray = JSONUtils.optJSONArray(responseObject, Constants.NineGagKeys.DATA
+        JSONArray feedsArray = JSONUtils.optJSONArray(responseObject, Constants.ApiKeys.DATA
                 .key);
         if (feedsArray != null) {
             ContentValues[] values = new ContentValues[feedsArray.length()];
@@ -120,26 +120,22 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
                 JSONObject feedObject = JSONUtils.optJSONObject(feedsArray, i);
                 if (feedObject != null) {
                     ContentValues value = new ContentValues();
-                    value.put(DBOpenHelper.COLUMN_ID, JSONUtils.optString(feedObject, Constants
-                            .NineGagKeys.ID.key));
+                    value.put(DBOpenHelper.COLUMN_ID, JSONUtils.optString(feedObject, Constants.ApiKeys.ID.key));
                     ids[i] = value.getAsString(DBOpenHelper.COLUMN_ID);
                     value.put(DBOpenHelper.COLUMN_CAPTION, JSONUtils.optString(feedObject,
-                            Constants.NineGagKeys.CAPTION.key));
-                    JSONObject imagesObject = JSONUtils.optJSONObject(feedObject, Constants
-                            .NineGagKeys.IMAGES.key);
+                            Constants.ApiKeys.CAPTION.key));
+                    JSONObject imagesObject = JSONUtils.optJSONObject(feedObject, Constants.ApiKeys.IMAGES.key);
                     if (imagesObject != null) {
                         value.put(DBOpenHelper.COLUMN_IMAGE_NORMAL, JSONUtils.optString
-                                (imagesObject, Constants.NineGagKeys.NORMAL.key));
+                                (imagesObject, Constants.ApiKeys.NORMAL.key));
                         value.put(DBOpenHelper.COLUMN_IMAGE_LARGE, JSONUtils.optString
-                                (imagesObject, Constants.NineGagKeys.LARGE.key));
+                                (imagesObject, Constants.ApiKeys.LARGE.key));
                     }
-                    value.put(DBOpenHelper.COLUMN_LINK, JSONUtils.optString(feedObject, Constants
-                            .NineGagKeys.LINK.key));
-                    JSONObject votesObject = JSONUtils.optJSONObject(feedObject, Constants
-                            .NineGagKeys.VOTES.key);
+                    value.put(DBOpenHelper.COLUMN_LINK, JSONUtils.optString(feedObject, Constants.ApiKeys.LINK.key));
+                    JSONObject votesObject = JSONUtils.optJSONObject(feedObject, Constants.ApiKeys.VOTES.key);
                     if (imagesObject != null) {
                         value.put(DBOpenHelper.COLUMN_VOTES_COUNT, JSONUtils.optInt(votesObject,
-                                Constants.NineGagKeys.COUNT.key));
+                                Constants.ApiKeys.COUNT.key));
                     }
                     values[i] = value;
                 }
@@ -155,10 +151,10 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
             getActivity().getContentResolver().bulkInsert(DBProvider.URI_NINE_GAG, values);
 
             // Storing the next paging id in Preferences
-            JSONObject pagingObject = JSONUtils.optJSONObject(responseObject, Constants.NineGagKeys
+            JSONObject pagingObject = JSONUtils.optJSONObject(responseObject, Constants.ApiKeys
                     .PAGING.key);
             if (pagingObject != null) {
-                nextPageId = JSONUtils.optString(pagingObject, Constants.NineGagKeys.NEXT.key);
+                nextPageId = JSONUtils.optString(pagingObject, Constants.ApiKeys.NEXT.key);
                 PreferencesManager.set(getActivity(), Constants.APP_PREFERENCES, Constants
                         .SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, nextPageId);
             }
@@ -187,6 +183,8 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
             //Clear the DB
             Logger.e(TAG, "Clearing the 9Gag cache");
             getActivity().getContentResolver().delete(DBProvider.URI_NINE_GAG, null, null);
+            PreferencesManager.set(getActivity(), Constants.APP_PREFERENCES, Constants
+                    .SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, null);
         }
     }
 
@@ -266,7 +264,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
     public void onDestroyView() {
         Application.cancelPendingRequests(Constants.VolleyTags.NINE_GAG_FEEDS);
         // Setting the next page id to null when this fragment is destroyed. This would typically
-        // be called whent the app is closed
+        // be called when the app is closed
         PreferencesManager.set(getActivity(), Constants.APP_PREFERENCES, Constants
                 .SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, null);
         super.onDestroyView();

@@ -7,12 +7,8 @@ import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 
-/**
- * This class extends the ContentProvider class and provides its implementations
- *
- * @author antriksh
- */
 public class DBProvider extends ContentProvider {
 
     public static final String DB_NAME = "insomnia.db";
@@ -22,12 +18,18 @@ public class DBProvider extends ContentProvider {
 
     private static final String AUTHORITY = "com.antrromet.insomnia.provider";
     private static final String URI_PREFIX = "content://com.antrromet.insomnia.provider/";
+
     public static final Uri URI_NINE_GAG = Uri.parse(URI_PREFIX + DBOpenHelper.NINE_GAG_TABLE_NAME);
+    public static final Uri URI_FACEBOOK = Uri.parse(URI_PREFIX + DBOpenHelper.FACEBOOK_TABLE_NAME);
+
     private static final int CONTENT_NINE_GAG = 101;
+    private static final int CONTENT_FACEBOOK = 102;
 
     static {
         URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.NINE_GAG_TABLE_NAME,
                 CONTENT_NINE_GAG);
+        URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.FACEBOOK_TABLE_NAME,
+                CONTENT_FACEBOOK);
     }
 
     private DBOpenHelper dbHelper;
@@ -42,6 +44,8 @@ public class DBProvider extends ContentProvider {
 
         if (contentType == CONTENT_NINE_GAG) {
             return DBOpenHelper.NINE_GAG_TABLE_NAME;
+        }else if (contentType == CONTENT_FACEBOOK) {
+            return DBOpenHelper.FACEBOOK_TABLE_NAME;
         }
 
         return null;
@@ -78,10 +82,9 @@ public class DBProvider extends ContentProvider {
     @Override
     public Uri insert(Uri uri, ContentValues values) {
         final SQLiteDatabase database = dbHelper.getWritableDatabase();
-        long rowId = -1;
 
         final String tableName = getTableName(URI_MATCHER.match(uri));
-        rowId = database.insert(tableName, null, values);
+        long rowId = database.insert(tableName, null, values);
         if (rowId != -1) {
             final Uri insertUri = ContentUris.withAppendedId(uri, rowId);
             getContext().getContentResolver().notifyChange(uri, null);
@@ -93,10 +96,9 @@ public class DBProvider extends ContentProvider {
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         final SQLiteDatabase database = dbHelper.getWritableDatabase();
-        int count = 0;
 
         final String tableName = getTableName(URI_MATCHER.match(uri));
-        count = database.delete(tableName, selection, selectionArgs);
+        int count = database.delete(tableName, selection, selectionArgs);
         getContext().getContentResolver().notifyChange(uri, null);
         return count;
     }
@@ -105,11 +107,10 @@ public class DBProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection,
                       String[] selectionArgs) {
         final SQLiteDatabase database = dbHelper.getWritableDatabase();
-        int count = 0;
 
         final String tableName = getTableName(URI_MATCHER.match(uri));
 
-        count = database.update(tableName, values, selection, selectionArgs);
+        int count = database.update(tableName, values, selection, selectionArgs);
         if (count > 0) {
             getContext().getContentResolver().notifyChange(uri, null);
         }
@@ -118,7 +119,7 @@ public class DBProvider extends ContentProvider {
     }
 
     @Override
-    public int bulkInsert(final Uri uri, final ContentValues[] values) {
+    public int bulkInsert(final Uri uri, @NonNull final ContentValues[] values) {
 
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
 

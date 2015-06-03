@@ -8,9 +8,8 @@ import com.android.volley.toolbox.Volley;
 
 public class Application extends android.app.Application {
 
-
-
     private static final String TAG = Application.class.getSimpleName();
+
     private static RequestQueue mRequestQueue;
 
     @Override

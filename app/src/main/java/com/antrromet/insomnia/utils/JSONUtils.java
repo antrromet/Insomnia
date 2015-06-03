@@ -3,9 +3,6 @@ package com.antrromet.insomnia.utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/**
- * Created by Antrromet on 5/27/15.
- */
 public class JSONUtils {
 
 	/**
@@ -72,6 +69,19 @@ public class JSONUtils {
 			return -1;
 		else
 			return jsonObject.optInt(key, -1);
+	}
+
+	/**
+	 *
+	 * @param jsonObject the object from which the long is to be fetched
+	 * @param key key for the int
+	 * @return value mapped by the given key, or {@code -1} if not present or -1.
+	 */
+	public static long optLong(JSONObject jsonObject, String key) {
+		if (jsonObject.isNull(key))
+			return -1;
+		else
+			return jsonObject.optLong(key, -1);
 	}
 
 }

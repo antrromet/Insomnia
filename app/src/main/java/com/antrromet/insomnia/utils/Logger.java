@@ -11,6 +11,7 @@ import com.antrromet.insomnia.BuildConfig;
  * @author Antrromet
  */
 public class Logger {
+
     public static final boolean DEBUG = BuildConfig.DEBUG;
 
     private Logger() {
@@ -56,7 +57,15 @@ public class Logger {
 
     public static void d(String tag, String message) {
         if (DEBUG && !TextUtils.isEmpty(message)) {
-            android.util.Log.d(tag, message);
+
+            int maxLogSize = 2000;
+            for (int i = 0; i <= message.length() / maxLogSize; i++) {
+                int start = i * maxLogSize;
+                int end = (i + 1) * maxLogSize;
+                end = end > message.length() ? message.length() : end;
+                android.util.Log.d(tag, message.substring(start, end));
+            }
+
         }
     }
 

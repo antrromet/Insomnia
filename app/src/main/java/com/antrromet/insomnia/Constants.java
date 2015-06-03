@@ -10,7 +10,7 @@ public class Constants {
      */
     public enum Loaders {
 
-        NINE_GAG_FEEDS(100),FACEBOOK_FEEDS(101);
+        NINE_GAG_FEEDS(100), FACEBOOK_FEEDS(101);
 
         public final int id;
 
@@ -52,7 +52,8 @@ public class Constants {
      */
     public enum SharedPreferenceKeys {
 
-        NINE_GAG_NEXT_PAGE_ID("nine_gag_next_page_id");
+        NINE_GAG_NEXT_PAGE_ID("nine_gag_next_page_id"), FACEBOOK_AFTER_PAGE_ID
+                ("facebook_after_page_id");
 
         public final String key;
 
@@ -65,14 +66,17 @@ public class Constants {
     /**
      * Enum for holding the keys for 9gag API
      */
-    public enum NineGagKeys {
+    public enum ApiKeys {
 
         DATA("data"), PAGING("paging"), NEXT("next"), ID("id"), CAPTION("caption"), IMAGES
-                ("images"), NORMAL("normal"), LARGE("large"), LINK("link"), VOTES("votes"), COUNT("count");
+                ("images"), NORMAL("normal"), LARGE("large"), LINK("link"), VOTES("votes"), COUNT
+                ("count"), FROM("from"), TO("to"), NAME("name"), MESSAGE("message"), PICTURE
+                ("picture"), FULL_PICTURE("full_picture"), TYPE("type"), STATUS_TYPE
+                ("status_type"), CREATED_TIME("created_time"), CURSORS("cursors");
 
         public final String key;
 
-        NineGagKeys(final String key) {
+        ApiKeys(final String key) {
             this.key = key;
         }
 
