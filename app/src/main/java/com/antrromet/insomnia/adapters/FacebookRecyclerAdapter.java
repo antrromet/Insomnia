@@ -18,6 +18,8 @@ public class FacebookRecyclerAdapter extends RecyclerView.Adapter<FacebookRecycl
 
     private final Context mContext;
     private Cursor mCursor;
+    private OnItemClickListener mItemClickListener;
+    private OnItemLongClickListener mItemLongClickListener;
 
     public FacebookRecyclerAdapter(Context context) {
         mContext = context;
@@ -77,8 +79,25 @@ public class FacebookRecyclerAdapter extends RecyclerView.Adapter<FacebookRecycl
         return mCursor.getCount();
     }
 
+    public void setOnItemClickListener(final OnItemClickListener itemClickListener) {
+        mItemClickListener = itemClickListener;
+    }
+
+    public void setOnItemLongClickListener(final OnItemLongClickListener itemLongClickListener) {
+        mItemLongClickListener = itemLongClickListener;
+    }
+
+    public interface OnItemClickListener {
+        void onItemClick(View view, int position, String id);
+    }
+
+    public interface OnItemLongClickListener {
+        void onItemLongClick(View view, int position, String id);
+    }
+
     // Provide a reference to the views for each data item
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener,
+            View.OnLongClickListener {
 
         private TextView ownerTextView;
         private TextView captionTextView;
@@ -89,7 +108,32 @@ public class FacebookRecyclerAdapter extends RecyclerView.Adapter<FacebookRecycl
             ownerTextView = (TextView) view.findViewById(R.id.root_layout).findViewById(R.id
                     .owner_text_view);
             captionTextView = (TextView) view.findViewById(R.id.root_layout).findViewById(R.id.caption_text_view);
-            imageView = (ImageView) view.findViewById(R.id.root_layout).findViewById(R.id.image_view);
+            imageView = (ImageView) view.findViewById(R.id.root_layout).findViewById(R.id.content_image_view);
+            view.setOnClickListener(this);
+            view.setOnLongClickListener(this);
+        }
+
+        @Override
+        public void onClick(View v) {
+            if (mItemClickListener != null) {
+                if (mCursor.moveToPosition(getAdapterPosition())) {
+                    String id = mCursor.getString(mCursor.getColumnIndex(DBOpenHelper.COLUMN_ID));
+                    mItemClickListener.onItemClick(v, getAdapterPosition(), id);
+                }
+            }
+        }
+
+        @Override
+        public boolean onLongClick(View v) {
+            if (mItemLongClickListener != null) {
+                if (mCursor.moveToPosition(getAdapterPosition())) {
+                    String id = mCursor.getString(mCursor.getColumnIndex(DBOpenHelper.COLUMN_ID));
+                    mItemLongClickListener.onItemLongClick(v, getAdapterPosition(), id);
+                }
+            }
+            return true;
         }
     }
+
+
 }

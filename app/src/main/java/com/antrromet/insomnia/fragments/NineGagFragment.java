@@ -1,7 +1,10 @@
 package com.antrromet.insomnia.fragments;
 
 import android.content.ContentValues;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -19,7 +22,9 @@ import com.android.volley.VolleyError;
 import com.antrromet.insomnia.Application;
 import com.antrromet.insomnia.Constants;
 import com.antrromet.insomnia.Constants.Loaders;
+import com.antrromet.insomnia.NineGagFullScreenActivity;
 import com.antrromet.insomnia.R;
+import com.antrromet.insomnia.WebViewActivity;
 import com.antrromet.insomnia.adapters.NineGagRecyclerAdapter;
 import com.antrromet.insomnia.interfaces.OnVolleyResponseListener;
 import com.antrromet.insomnia.provider.DBOpenHelper;
@@ -32,12 +37,14 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class NineGagFragment extends BaseFragment implements OnVolleyResponseListener,
-        LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener {
+        LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener, NineGagRecyclerAdapter.OnItemClickListener, NineGagRecyclerAdapter.OnItemLongClickListener {
 
     private static final String TAG = NineGagFragment.class.getSimpleName();
+    private static final String NINE_GAG_PKG_NAME = "com.ninegag.android.app";
     private NineGagRecyclerAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
+    private LinearLayoutManager mLayoutManager;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
@@ -54,10 +61,12 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         // Setting up the Recycler View
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
         mRecyclerView.setHasFixedSize(true);
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new NineGagRecyclerAdapter(getActivity());
         mRecyclerView.setAdapter(mAdapter);
+        mAdapter.setOnItemClickListener(this);
+        mAdapter.setOnItemLongClickListener(this);
 
         // Loading data from the cache
         getActivity().getSupportLoaderManager().restartLoader(Loaders.NINE_GAG_FEEDS.id, null,
@@ -66,7 +75,6 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         // Requesting new data
         setVolleyListener(this);
         requestFeeds(String.valueOf(0));
-
         return view;
     }
 
@@ -74,17 +82,11 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
      * Call the 9Gag feeds API
      */
     private void requestFeeds(String pagingId) {
-
-        // Adding request to request queue only if network is available else show the error to
-        // the user
-        if (isNetworkAvailable()) {
-            // Start refreshing animation
-            mSwipeRefreshLayout.setEnabled(false);
-            mSwipeRefreshLayout.setRefreshing(true);
-            requestVolley(Constants.VolleyTags.NINE_GAG_FEEDS, Request.Method.GET, String.format
-                    (Constants.Urls.NINE_GAG_FEEDS.link, pagingId), null, null);
-        }
-
+        // Start refreshing animation
+        mSwipeRefreshLayout.setEnabled(false);
+        mSwipeRefreshLayout.setRefreshing(true);
+        requestVolley(Constants.VolleyTags.NINE_GAG_FEEDS, Request.Method.GET, String.format
+                (Constants.Urls.NINE_GAG_FEEDS.link, pagingId), null, null);
     }
 
     @Override
@@ -254,7 +256,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         requestFeeds(String.valueOf(0));
     }
 
-    private void onLoadMore(){
+    private void onLoadMore() {
         String nextPageId = PreferencesManager.getString(getActivity(), Constants.APP_PREFERENCES,
                 Constants.SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, String.valueOf(0));
         requestFeeds(TextUtils.isEmpty(nextPageId) ? String.valueOf(0) : nextPageId);
@@ -269,4 +271,38 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
                 .SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, null);
         super.onDestroyView();
     }
+
+
+    @Override
+    public void onItemClick(View view, int position, String id) {
+        if (getActivity() != null) {
+            startActivityForResult(new Intent(getActivity(), NineGagFullScreenActivity.class)
+                    .putExtra("position", position), 100);
+        }
+    }
+
+    @Override
+    public void onItemLongClick(View view, int position, String id) {
+        //Launch the app or the webview activity
+//        http://9gag.com/gag/aD3EWjB?ref=android
+        String link = "http://9gag" + ".com/gag/" + id + "?ref=android";
+        PackageManager pm = getActivity().getPackageManager();
+        try {
+            pm.getPackageInfo(NINE_GAG_PKG_NAME, PackageManager.GET_ACTIVITIES);
+        } catch (PackageManager.NameNotFoundException e) {
+            startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link));
+        } finally {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 100 && data != null) {
+            mRecyclerView.scrollToPosition(data.getIntExtra("position", mLayoutManager
+                    .findFirstVisibleItemPosition()));
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
 }

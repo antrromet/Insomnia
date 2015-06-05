@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest
-    package="com.antrromet.insomnia"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest package="com.antrromet.insomnia"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -23,19 +22,26 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.facebook.FacebookActivity"
-            android:configChanges=
-                "keyboard|keyboardHidden|screenLayout|screenSize|orientation"
+            android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
+            android:screenOrientation="portrait"
             android:theme="@android:style/Theme.Translucent.NoTitleBar"/>
 
+        <activity
+            android:name=".NineGagFullScreenActivity"
+            android:label="@string/post"
+            android:screenOrientation="portrait"/>
+
+        <activity
+            android:name=".WebViewActivity"
+            android:screenOrientation="portrait"/>
+
         <provider
-            android:name="com.antrromet.insomnia.provider.DBProvider"
+            android:name=".provider.DBProvider"
             android:authorities="com.antrromet.insomnia.provider"
             android:exported="false"/>
-
         <provider
             android:name="com.facebook.FacebookContentProvider"
             android:authorities="com.facebook.app.FacebookContentProvider1422838621372901"

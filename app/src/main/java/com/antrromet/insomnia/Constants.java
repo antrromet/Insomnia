@@ -24,7 +24,7 @@ public class Constants {
      */
     public enum VolleyTags {
 
-        NINE_GAG_FEEDS("nine_gag_feeds");
+        NINE_GAG_FEEDS("nine_gag_feeds"), INSTAGRAM_FEEDS("instagram_feeds");
 
         public final String tag;
 
@@ -38,7 +38,8 @@ public class Constants {
      */
     public enum Urls {
 
-        NINE_GAG_FEEDS("http://infinigag.eu01.aws.af.cm/hot/%s");
+        NINE_GAG_FEEDS("http://infinigag.eu01.aws.af.cm/hot/%s"), INSTAGRAM_FEEDS("https://api" +
+                ".instagram.com/v1/users/self/feed?access_token=%s");
 
         public final String link;
 
@@ -53,7 +54,7 @@ public class Constants {
     public enum SharedPreferenceKeys {
 
         NINE_GAG_NEXT_PAGE_ID("nine_gag_next_page_id"), FACEBOOK_AFTER_PAGE_ID
-                ("facebook_after_page_id");
+                ("facebook_after_page_id"), INSTAGRAM_ACCESS_TOKEN("instagram_access_token");
 
         public final String key;
 
@@ -72,7 +73,7 @@ public class Constants {
                 ("images"), NORMAL("normal"), LARGE("large"), LINK("link"), VOTES("votes"), COUNT
                 ("count"), FROM("from"), TO("to"), NAME("name"), MESSAGE("message"), PICTURE
                 ("picture"), FULL_PICTURE("full_picture"), TYPE("type"), STATUS_TYPE
-                ("status_type"), CREATED_TIME("created_time"), CURSORS("cursors");
+                ("status_type"), CREATED_TIME("created_time"), CURSORS("cursors"), AFTER("after");
 
         public final String key;
 

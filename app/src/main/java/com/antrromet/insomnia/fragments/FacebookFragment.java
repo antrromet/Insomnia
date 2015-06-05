@@ -2,7 +2,9 @@ package com.antrromet.insomnia.fragments;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -17,12 +19,14 @@ import android.view.ViewGroup;
 
 import com.antrromet.insomnia.Constants;
 import com.antrromet.insomnia.R;
+import com.antrromet.insomnia.WebViewActivity;
 import com.antrromet.insomnia.adapters.FacebookRecyclerAdapter;
 import com.antrromet.insomnia.provider.DBOpenHelper;
 import com.antrromet.insomnia.provider.DBProvider;
 import com.antrromet.insomnia.utils.JSONUtils;
 import com.antrromet.insomnia.utils.Logger;
 import com.antrromet.insomnia.utils.PreferencesManager;
+import com.antrromet.insomnia.widgets.EndlessRecyclerOnScrollListener;
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -38,9 +42,11 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class FacebookFragment extends BaseFragment implements LoaderManager
-        .LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener {
+        .LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener, FacebookRecyclerAdapter
+        .OnItemClickListener, FacebookRecyclerAdapter.OnItemLongClickListener {
 
     private static final String TAG = FacebookFragment.class.getSimpleName();
+    private static final String FACEBOOK_PKG_NAME = "com.facebook.katana";
     private FacebookRecyclerAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -62,10 +68,18 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
 
         // Setting up the Recycler View
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(layoutManager);
         mAdapter = new FacebookRecyclerAdapter(getActivity());
         mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setOnScrollListener(new EndlessRecyclerOnScrollListener(layoutManager) {
+            @Override
+            public void onLoadMore(int current_page) {
+                requestFeed(true);
+            }
+        });
+        mAdapter.setOnItemLongClickListener(this);
+        mAdapter.setOnItemClickListener(this);
 
         // Setup facebook login
         final LoginButton mLoginButton = (LoginButton) view.findViewById(R.id.login_button);
@@ -76,7 +90,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
             // Loading data from the cache
             getActivity().getSupportLoaderManager().restartLoader(Constants.Loaders.FACEBOOK_FEEDS.id,
                     null, this);
-            requestFeed();
+            requestFeed(false);
         } else {
             mSwipeRefreshLayout.setVisibility(View.GONE);
             mLoginButton.setVisibility(View.VISIBLE);
@@ -90,7 +104,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
                     mAccessToken = loginResult.getAccessToken();
                     mLoginButton.setVisibility(View.GONE);
                     mSwipeRefreshLayout.setVisibility(View.VISIBLE);
-                    requestFeed();
+                    requestFeed(false);
                 }
 
                 @Override
@@ -111,13 +125,26 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
     /**
      * Request the required info from the FB graph API
      */
-    private void requestFeed() {
+    private void requestFeed(boolean isNextPage) {
         if (isNetworkAvailable()) {
             mSwipeRefreshLayout.setEnabled(false);
             mSwipeRefreshLayout.setRefreshing(true);
             Bundle parameters = new Bundle();
             parameters.putString("fields", "id,from,to,message,full_picture,link,type,status_type");
             parameters.putString("date_format", "U");
+            if (isNextPage) {
+                String afterPageId = PreferencesManager.getString(getActivity(), Constants
+                        .APP_PREFERENCES, Constants.SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID);
+                if (TextUtils.isEmpty(afterPageId)) {
+                    // When the next page id is null simply return, there is nothing more to load
+                    mSwipeRefreshLayout.setEnabled(false);
+                    mSwipeRefreshLayout.setRefreshing(true);
+                    showToast(getString(R.string.no_load_more));
+                    return;
+                } else {
+                    parameters.putString("after", afterPageId);
+                }
+            }
             new GraphRequest(
                     mAccessToken,
                     "/me/home",
@@ -135,6 +162,8 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
                             insertFeedsIntoDb(responseObject);
                             getActivity().getSupportLoaderManager().restartLoader(Constants.Loaders
                                     .FACEBOOK_FEEDS.id, null, FacebookFragment.this);
+                        } else {
+                            Logger.e(TAG, "Response object is null");
                         }
                     }
                 }
@@ -208,10 +237,10 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
             JSONObject pagingObject = JSONUtils.optJSONObject(responseObject, Constants.ApiKeys
                     .PAGING.key);
             if (pagingObject != null) {
-                JSONObject cursorsObject = JSONUtils.optJSONObject(responseObject, Constants.ApiKeys
+                JSONObject cursorsObject = JSONUtils.optJSONObject(pagingObject, Constants.ApiKeys
                         .CURSORS.key);
                 if (cursorsObject != null) {
-                    String afterPageId = JSONUtils.optString(pagingObject, Constants.ApiKeys.NEXT
+                    String afterPageId = JSONUtils.optString(cursorsObject, Constants.ApiKeys.AFTER
                             .key);
                     PreferencesManager.set(getActivity(), Constants.APP_PREFERENCES, Constants
                             .SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID, afterPageId);
@@ -310,7 +339,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
 
     @Override
     public void onRefresh() {
-        requestFeed();
+        requestFeed(false);
     }
 
     @Override
@@ -324,6 +353,25 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
      */
     public void onTabClicked() {
         mRecyclerView.smoothScrollToPosition(0);
+    }
+
+    @Override
+    public void onItemClick(View view, int position, String id) {
+        Logger.d(TAG, "pos = " + position + " and id = " + id);
+    }
+
+    @Override
+    public void onItemLongClick(View view, int position, String id) {
+        // Launch the Facebook app or the webview activity
+        String link = "https://www.facebook.com/" + id;
+        PackageManager pm = getActivity().getPackageManager();
+        try {
+            pm.getPackageInfo(FACEBOOK_PKG_NAME, PackageManager.GET_ACTIVITIES);
+        } catch (PackageManager.NameNotFoundException e) {
+            startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link));
+        } finally {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+        }
     }
 
 }
