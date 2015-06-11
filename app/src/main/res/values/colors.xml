@@ -3,6 +3,6 @@
 
     <!-- Colors for the swipe refresh layout -->
     <color name="swipe_refresh_grey">#242424</color>
-    <color name="swipe_refresh_blue">#33B5E5</color>
+    <color name="transparent_black">#80000000</color>
 
 </resources>

@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingBottom="7dp"
-    android:paddingLeft="7dp"
-    android:paddingRight="7dp" >
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical">
 
-
-    <ProgressBar
-        android:id="@+id/webViewProgress"
-        style="@android:style/Widget.DeviceDefault.ProgressBar.Horizontal"
+    <include
+        android:id="@+id/action_bar"
+        layout="@layout/action_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="-7dp" />
+        android:layout_alignParentTop="true"/>
 
-    <WebView
-        android:id="@+id/webView"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="7dp" />
+        android:layout_height="match_parent">
 
-</RelativeLayout>
+        <ProgressBar
+            android:id="@+id/webViewProgress"
+            style="@android:style/Widget.DeviceDefault.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="-7dp"/>
+
+        <WebView
+            android:id="@+id/webView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </RelativeLayout>
+
+</LinearLayout>

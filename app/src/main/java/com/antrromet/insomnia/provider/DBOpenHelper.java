@@ -37,10 +37,9 @@ public class DBOpenHelper extends SQLiteOpenHelper {
 
     private static final String NINE_GAG_TABLE_BUILDER = "create table " + NINE_GAG_TABLE_NAME +
             "(" + BaseColumns._ID + " integer primary key, " + COLUMN_INSERTION_TIME + " " +
-            "timestamp default (strftime('%s', 'now')), " + COLUMN_ID + INTEGER + COLUMN_CAPTION
-            + TEXT + COLUMN_IMAGE_LARGE + TEXT + COLUMN_IMAGE_NORMAL + TEXT + COLUMN_LINK + TEXT
-            + TEXT + COLUMN_VOTES_COUNT + INTEGER + " unique(" + COLUMN_ID + ") on conflict " +
-            "ignore);";
+            INTEGER + COLUMN_ID + INTEGER + COLUMN_CAPTION + TEXT + COLUMN_IMAGE_LARGE + TEXT +
+            COLUMN_IMAGE_NORMAL + TEXT + COLUMN_LINK + TEXT + COLUMN_VOTES_COUNT + INTEGER + " " +
+            "unique(" + COLUMN_ID + ") on conflict " + "ignore);";
     private static final String NINE_GAG_TABLE_DESTROYER = "drop table " + DBProvider.DB_NAME +
             "" + "." + NINE_GAG_TABLE_NAME + ";";
 

@@ -3,25 +3,29 @@ package com.antrromet.insomnia.adapters;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.v4.view.PagerAdapter;
+import android.view.GestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.antrromet.insomnia.R;
 import com.antrromet.insomnia.provider.DBOpenHelper;
+import com.antrromet.insomnia.widgets.TouchImageView;
 import com.squareup.picasso.Picasso;
-
-import uk.co.senab.photoview.PhotoView;
 
 public class NineGagPagerAdapter extends PagerAdapter {
 
 
     private final Context mContext;
     private Cursor mCursor;
+    private GestureDetector.OnDoubleTapListener mDoubleTapListener;
+    private View.OnLongClickListener mLongClickListener;
+    private boolean mIsTitleVisible;
 
     public NineGagPagerAdapter(Object object) {
-        mContext = (Context)object;
+        mContext = (Context) object;
+        mDoubleTapListener = (GestureDetector.OnDoubleTapListener) object;
+        mLongClickListener = (View.OnLongClickListener) object;
     }
 
     public void setCursor(Cursor cursor) {
@@ -35,11 +39,23 @@ public class NineGagPagerAdapter extends PagerAdapter {
                 .pager_item_nine_gag_full_screen, null);
         mCursor.moveToPosition(position);
         TextView captionTextView = (TextView) view.findViewById(R.id.title_text_view);
-            captionTextView.setText(mCursor.getString(mCursor
-                    .getColumnIndex(DBOpenHelper.COLUMN_CAPTION)));
-        ImageView contentImageView = (PhotoView) view.findViewById(R.id.content_image_view);
+        captionTextView.setText(mCursor.getString(mCursor
+                .getColumnIndex(DBOpenHelper.COLUMN_CAPTION)));
+        TouchImageView contentImageView = (TouchImageView) view.findViewById(R.id
+                .content_image_view);
+        contentImageView.setOnDoubleTapListener(mDoubleTapListener);
         Picasso.with(mContext).load(mCursor.getString(mCursor.getColumnIndex(DBOpenHelper
                 .COLUMN_IMAGE_NORMAL))).into(contentImageView);
+        captionTextView.bringToFront();
+        if (mIsTitleVisible) {
+            captionTextView.setVisibility(View.VISIBLE);
+        } else {
+            captionTextView.setVisibility(View.GONE);
+        }
+        view.setTag(position);
+        contentImageView.setOnLongClickListener(mLongClickListener);
+        contentImageView.setTag(R.id.key_id, mCursor.getString(mCursor.getColumnIndex(DBOpenHelper
+                .COLUMN_ID)));
         container.addView(view, 0);
         return view;
     }
@@ -71,4 +87,8 @@ public class NineGagPagerAdapter extends PagerAdapter {
         return builder.toString();
     }
 
+    public void setTitleVisibility(boolean isTitleVisible) {
+        mIsTitleVisible = isTitleVisible;
+        notifyDataSetChanged();
+    }
 }

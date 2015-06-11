@@ -5,6 +5,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     android:background="@android:color/black"
     android:padding="7dp">
 
@@ -13,6 +14,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:layout_marginTop="?android:attr/actionBarSize"
+        android:background="@color/transparent_black"
+        android:padding="7dp"
         android:textColor="@android:color/white"
         android:textSize="18sp"
         android:textStyle="bold"/>
@@ -23,12 +27,10 @@
     <!--android:layout_below="@id/title_text_view"-->
     <!--android:layout_marginTop="7dp">-->
 
-    <uk.co.senab.photoview.PhotoView
+    <com.antrromet.insomnia.widgets.TouchImageView
         android:id="@+id/content_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/title_text_view"
-        android:layout_marginTop="7dp"
         android:adjustViewBounds="true"
         android:contentDescription="@string/app_name"
         android:scaleType="fitCenter"/>

@@ -32,19 +32,22 @@ import com.antrromet.insomnia.provider.DBProvider;
 import com.antrromet.insomnia.utils.JSONUtils;
 import com.antrromet.insomnia.utils.Logger;
 import com.antrromet.insomnia.utils.PreferencesManager;
+import com.antrromet.insomnia.widgets.EndlessRecyclerOnScrollListener;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class NineGagFragment extends BaseFragment implements OnVolleyResponseListener,
-        LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener, NineGagRecyclerAdapter.OnItemClickListener, NineGagRecyclerAdapter.OnItemLongClickListener {
+        LoaderManager.LoaderCallbacks<Cursor>, SwipeRefreshLayout.OnRefreshListener,
+        NineGagRecyclerAdapter.OnItemClickListener, NineGagRecyclerAdapter
+                .OnItemLongClickListener {
 
     private static final String TAG = NineGagFragment.class.getSimpleName();
-    private static final String NINE_GAG_PKG_NAME = "com.ninegag.android.app";
     private NineGagRecyclerAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private LinearLayoutManager mLayoutManager;
+    private double mLastItemCount;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
@@ -54,8 +57,8 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         // Setting up the Refresh Layout
         mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
-        mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_blue, R.color
-                        .swipe_refresh_grey, R.color.swipe_refresh_blue,
+        mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_grey, R.color
+                        .swipe_refresh_grey, R.color.swipe_refresh_grey,
                 R.color.swipe_refresh_grey);
 
         // Setting up the Recycler View
@@ -67,6 +70,12 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         mRecyclerView.setAdapter(mAdapter);
         mAdapter.setOnItemClickListener(this);
         mAdapter.setOnItemLongClickListener(this);
+        mRecyclerView.setOnScrollListener(new EndlessRecyclerOnScrollListener(mLayoutManager) {
+            @Override
+            public void onLoadMore(int current_page) {
+                loadMore();
+            }
+        });
 
         // Loading data from the cache
         getActivity().getSupportLoaderManager().restartLoader(Loaders.NINE_GAG_FEEDS.id, null,
@@ -85,6 +94,9 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         // Start refreshing animation
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setRefreshing(true);
+        if (pagingId.equals(String.valueOf(0))) {
+            //TODO change time
+        }
         requestVolley(Constants.VolleyTags.NINE_GAG_FEEDS, Request.Method.GET, String.format
                 (Constants.Urls.NINE_GAG_FEEDS.link, pagingId), null, null);
     }
@@ -118,7 +130,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
             ContentValues[] values = new ContentValues[feedsArray.length()];
             // ids is used to check the cache and to check if the cache is to be cleared
             String[] ids = new String[feedsArray.length()];
-            for (int i = feedsArray.length(); i >= 0; i--) {
+            for (int i = 0; i < feedsArray.length(); i++) {
                 JSONObject feedObject = JSONUtils.optJSONObject(feedsArray, i);
                 if (feedObject != null) {
                     ContentValues value = new ContentValues();
@@ -139,6 +151,8 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
                         value.put(DBOpenHelper.COLUMN_VOTES_COUNT, JSONUtils.optInt(votesObject,
                                 Constants.ApiKeys.COUNT.key));
                     }
+                    value.put(DBOpenHelper.COLUMN_INSERTION_TIME, System.nanoTime() +
+                            mLastItemCount);
                     values[i] = value;
                 }
             }
@@ -228,12 +242,17 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         }
         // Load with the latest feed on the top
         return new CursorLoader(getActivity(), DBProvider.URI_NINE_GAG, null, null, null,
-                DBOpenHelper.COLUMN_INSERTION_TIME + " desc");
+                DBOpenHelper.COLUMN_INSERTION_TIME + " asc");
     }
 
     @Override
     public void onLoadFinished(Loader loader, Cursor cursor) {
         if (getActivity() != null) {
+            if (cursor.moveToLast()) {
+                mLastItemCount = cursor.getDouble(cursor.getColumnIndex(DBOpenHelper
+                        .COLUMN_INSERTION_TIME));
+                cursor.moveToFirst();
+            }
             // Update the cursor in the adapter
             mAdapter.setCursor(cursor);
         }
@@ -256,7 +275,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         requestFeeds(String.valueOf(0));
     }
 
-    private void onLoadMore() {
+    private void loadMore() {
         String nextPageId = PreferencesManager.getString(getActivity(), Constants.APP_PREFERENCES,
                 Constants.SharedPreferenceKeys.NINE_GAG_NEXT_PAGE_ID, String.valueOf(0));
         requestFeeds(TextUtils.isEmpty(nextPageId) ? String.valueOf(0) : nextPageId);
@@ -288,9 +307,10 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         String link = "http://9gag" + ".com/gag/" + id + "?ref=android";
         PackageManager pm = getActivity().getPackageManager();
         try {
-            pm.getPackageInfo(NINE_GAG_PKG_NAME, PackageManager.GET_ACTIVITIES);
+            pm.getPackageInfo(Constants.NINE_GAG_PKG_NAME, PackageManager.GET_ACTIVITIES);
         } catch (PackageManager.NameNotFoundException e) {
-            startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link));
+            startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link)
+                    .putExtra("title", getString(R.string.nine_gag_post)));
         } finally {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
         }

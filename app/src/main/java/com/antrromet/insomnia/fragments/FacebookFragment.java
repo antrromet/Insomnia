@@ -62,8 +62,8 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
         // Setting up the Refresh Layout
         mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
-        mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_blue, R.color
-                        .swipe_refresh_grey, R.color.swipe_refresh_blue,
+        mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_grey, R.color
+                        .swipe_refresh_grey, R.color.swipe_refresh_grey,
                 R.color.swipe_refresh_grey);
 
         // Setting up the Recycler View
@@ -84,6 +84,28 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
         // Setup facebook login
         final LoginButton mLoginButton = (LoginButton) view.findViewById(R.id.login_button);
         mCallbackManager = CallbackManager.Factory.create();
+        mLoginButton.setReadPermissions("read_stream");
+        mLoginButton.setFragment(this);
+        // Callback registration
+        mLoginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
+            @Override
+            public void onSuccess(LoginResult loginResult) {
+                showToast(R.string.successfully_logged_in);
+                mAccessToken = loginResult.getAccessToken();
+                mLoginButton.setVisibility(View.GONE);
+                mSwipeRefreshLayout.setVisibility(View.VISIBLE);
+                requestFeed(false);
+            }
+
+            @Override
+            public void onCancel() {
+            }
+
+            @Override
+            public void onError(FacebookException exception) {
+                showToast(R.string.facebook_failed_login);
+            }
+        });
         if (isFacebookLoggedIn()) {
             mLoginButton.setVisibility(View.GONE);
             mSwipeRefreshLayout.setVisibility(View.VISIBLE);
@@ -94,29 +116,6 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
         } else {
             mSwipeRefreshLayout.setVisibility(View.GONE);
             mLoginButton.setVisibility(View.VISIBLE);
-            mLoginButton.setReadPermissions("read_stream");
-            mLoginButton.setFragment(this);
-            // Callback registration
-            mLoginButton.registerCallback(mCallbackManager, new FacebookCallback<LoginResult>() {
-                @Override
-                public void onSuccess(LoginResult loginResult) {
-                    showToast(R.string.successfully_logged_in);
-                    mAccessToken = loginResult.getAccessToken();
-                    mLoginButton.setVisibility(View.GONE);
-                    mSwipeRefreshLayout.setVisibility(View.VISIBLE);
-                    requestFeed(false);
-                }
-
-                @Override
-                public void onCancel() {
-                    // App code
-                }
-
-                @Override
-                public void onError(FacebookException exception) {
-                    // App code
-                }
-            });
         }
 
         return view;
@@ -157,13 +156,22 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
                     mSwipeRefreshLayout.setRefreshing(false);
                     if (getActivity() != null) {
                         Logger.d(TAG, graphResponse.getRawResponse());
-                        JSONObject responseObject = graphResponse.getJSONObject();
-                        if (responseObject != null) {
-                            insertFeedsIntoDb(responseObject);
-                            getActivity().getSupportLoaderManager().restartLoader(Constants.Loaders
-                                    .FACEBOOK_FEEDS.id, null, FacebookFragment.this);
+                        if (graphResponse.getError() != null) {
+                            Logger.e(TAG, graphResponse.getError().toString());
+                            String error = graphResponse.getError().getErrorUserTitle() +
+                                    graphResponse.getError().getErrorUserMessage();
+                            if (TextUtils.isEmpty(error)) {
+                                error = graphResponse
+                                        .getError().getErrorMessage();
+                            }
+                            showToast(error);
                         } else {
-                            Logger.e(TAG, "Response object is null");
+                            JSONObject responseObject = graphResponse.getJSONObject();
+                            if (responseObject != null) {
+                                insertFeedsIntoDb(responseObject);
+                                getActivity().getSupportLoaderManager().restartLoader(Constants.Loaders
+                                        .FACEBOOK_FEEDS.id, null, FacebookFragment.this);
+                            }
                         }
                     }
                 }
@@ -368,7 +376,8 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
         try {
             pm.getPackageInfo(FACEBOOK_PKG_NAME, PackageManager.GET_ACTIVITIES);
         } catch (PackageManager.NameNotFoundException e) {
-            startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link));
+            startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link)
+                    .putExtra("title", getString(R.string.facebook_post)));
         } finally {
             startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
         }

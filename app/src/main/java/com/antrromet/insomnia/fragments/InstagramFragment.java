@@ -25,14 +25,15 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
     private Button mLoginButton;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
+            savedInstanceState) {
         View view = View.inflate(getActivity(), R.layout.fragment_instagram, null);
 
         // Setting up the Refresh Layout
         mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh_layout);
         mSwipeRefreshLayout.setOnRefreshListener(this);
-        mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_blue, R.color
-                        .swipe_refresh_grey, R.color.swipe_refresh_blue,
+        mSwipeRefreshLayout.setColorSchemeResources(R.color.swipe_refresh_grey, R.color
+                        .swipe_refresh_grey, R.color.swipe_refresh_grey,
                 R.color.swipe_refresh_grey);
 
         // Setting up the Instagram login button
@@ -46,7 +47,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
         } else {
             mLoginButton.setVisibility(View.GONE);
             mSwipeRefreshLayout.setVisibility(View.VISIBLE);
-            requestFeeds();
+            requestFeeds(accessToken);
         }
 
         setVolleyListener(this);
@@ -56,11 +57,11 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.login_button) {
-            String loginLink = "https://instagram" + ".com/oauth/authorize/?client_id=" +
-                    getString(R.string.instagram_client_id) + "&redirect_uri=" + getString(R
-                    .string.instagram_redirect_uri) + "&response_type=token";
             startActivityForResult(new Intent(getActivity(), WebViewActivity.class).putExtra
-                    ("link", loginLink), 101);
+                    ("link", String.format(Constants.Urls.INSTAGRAM_LOGIN.link, getString(R
+                            .string.instagram_client_id), getString(R.string
+                            .instagram_redirect_uri))).putExtra
+                    ("title", getString(R.string.instagram_login_title)), 101);
         }
     }
 
@@ -74,7 +75,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
             } else {
                 mLoginButton.setVisibility(View.GONE);
                 mSwipeRefreshLayout.setVisibility(View.VISIBLE);
-                requestFeeds();
+                requestFeeds(accessToken);
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -83,19 +84,12 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
     /**
      * Fetches the feed for the logged in user
      */
-    private void requestFeeds() {
-        String accessToken = PreferencesManager.getString(getActivity(), Constants
-                .APP_PREFERENCES, Constants.SharedPreferenceKeys.INSTAGRAM_ACCESS_TOKEN);
-        if (TextUtils.isEmpty(accessToken)) {
-            mSwipeRefreshLayout.setVisibility(View.GONE);
-            mLoginButton.setVisibility(View.VISIBLE);
-        } else {
-            mSwipeRefreshLayout.setEnabled(false);
-            mSwipeRefreshLayout.setRefreshing(true);
-            requestVolley(Constants.VolleyTags.INSTAGRAM_FEEDS, Request.Method.GET, String
-                    .format(Constants
-                            .Urls.INSTAGRAM_FEEDS.link, accessToken), null, null);
-        }
+    private void requestFeeds(String accessToken) {
+        mSwipeRefreshLayout.setEnabled(false);
+        mSwipeRefreshLayout.setRefreshing(true);
+        requestVolley(Constants.VolleyTags.INSTAGRAM_FEEDS, Request.Method.GET, String
+                .format(Constants
+                        .Urls.INSTAGRAM_FEEDS.link, accessToken), null, null);
     }
 
     @Override
@@ -105,11 +99,13 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
 
     @Override
     public void OnSuccess(Constants.VolleyTags tag, Object responseObject) {
-
+        mSwipeRefreshLayout.setEnabled(true);
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 
     @Override
     public void OnError(Constants.VolleyTags tag, VolleyError error) {
-
+        mSwipeRefreshLayout.setEnabled(true);
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 }

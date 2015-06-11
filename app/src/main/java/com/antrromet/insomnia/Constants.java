@@ -5,6 +5,8 @@ public class Constants {
     // App preferences stored in this file
     public static final String APP_PREFERENCES = "app_preferences";
 
+    public static final String NINE_GAG_PKG_NAME = "com.ninegag.android.app";
+
     /**
      * Enum for managing all the Loaders
      */
@@ -38,7 +40,9 @@ public class Constants {
      */
     public enum Urls {
 
-        NINE_GAG_FEEDS("http://infinigag.eu01.aws.af.cm/hot/%s"), INSTAGRAM_FEEDS("https://api" +
+        NINE_GAG_FEEDS("http://infinigag.eu01.aws.af.cm/hot/%s"), INSTAGRAM_LOGIN
+                ("https://instagram.com/oauth/authorize/?client_id=%s&redirect_uri=%s&response_type=token"),
+        INSTAGRAM_FEEDS("https://api" +
                 ".instagram.com/v1/users/self/feed?access_token=%s");
 
         public final String link;

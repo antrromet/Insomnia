@@ -2,6 +2,8 @@ package com.antrromet.insomnia;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebChromeClient;
@@ -21,6 +23,16 @@ public class WebViewActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web_view);
+
+        String title = getIntent().getStringExtra("title");
+        // Setting up toolbar
+        Toolbar toolBar = (Toolbar) findViewById(R.id.action_bar);
+        if (!TextUtils.isEmpty(title)) {
+            toolBar.setTitle(title);
+        }
+        setSupportActionBar(toolBar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         mWebViewProgressBar = (ProgressBar) findViewById(R.id.webViewProgress);
 
         mWebView = (WebView) findViewById(R.id.webView);

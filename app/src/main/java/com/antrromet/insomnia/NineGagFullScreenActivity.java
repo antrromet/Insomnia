@@ -1,8 +1,11 @@
 package com.antrromet.insomnia;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -11,8 +14,12 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
+import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.animation.AccelerateInterpolator;
 
 import com.antrromet.insomnia.adapters.NineGagPagerAdapter;
 import com.antrromet.insomnia.provider.DBOpenHelper;
@@ -20,11 +27,14 @@ import com.antrromet.insomnia.provider.DBProvider;
 import com.antrromet.insomnia.widgets.HackyViewPager;
 
 public class NineGagFullScreenActivity extends AppCompatActivity implements LoaderManager
-        .LoaderCallbacks<Cursor>, ViewPager.OnPageChangeListener{
+        .LoaderCallbacks<Cursor>, ViewPager.OnPageChangeListener, GestureDetector
+        .OnDoubleTapListener, View.OnLongClickListener {
 
     private NineGagPagerAdapter mAdapter;
     private HackyViewPager mViewPager;
     private ShareActionProvider mShareActionProvider;
+    private Toolbar mToolBar;
+    private boolean mIsPageBarVisible;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,17 +42,31 @@ public class NineGagFullScreenActivity extends AppCompatActivity implements Load
         setContentView(R.layout.activity_nine_gag_full_screen);
 
         // Setting up toolbar
-        Toolbar mToolbar = (Toolbar) findViewById(R.id.action_bar);
-        setSupportActionBar(mToolbar);
+        mToolBar = (Toolbar) findViewById(R.id.action_bar);
+        setSupportActionBar(mToolBar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        mToolBar.bringToFront();
 
         mViewPager = (HackyViewPager) findViewById(R.id.view_pager);
         mAdapter = new NineGagPagerAdapter(this);
         mViewPager.setAdapter(mAdapter);
         mViewPager.addOnPageChangeListener(this);
 
+        Handler mHandler = new Handler();
+        Runnable mHideRunnable = new Runnable() {
+            @Override
+            public void run() {
+                hideActionBar();
+                mViewPager.findViewWithTag(mViewPager.getCurrentItem()).findViewById(R.id.title_text_view)
+                        .setVisibility(View.GONE);
+            }
+        };
+
         getSupportLoaderManager().restartLoader(Constants.Loaders.NINE_GAG_FEEDS.id, null,
                 this);
+
+        showActionBar();
+        mHandler.postDelayed(mHideRunnable, 3000);
     }
 
     @Override
@@ -66,7 +90,7 @@ public class NineGagFullScreenActivity extends AppCompatActivity implements Load
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         // This order should exactly be the same as the one in the Main Activity
         return new CursorLoader(this, DBProvider.URI_NINE_GAG, null, null, null,
-                DBOpenHelper.COLUMN_INSERTION_TIME + " desc");
+                DBOpenHelper.COLUMN_INSERTION_TIME + " asc");
     }
 
     @Override
@@ -111,6 +135,15 @@ public class NineGagFullScreenActivity extends AppCompatActivity implements Load
     @Override
     public void onPageSelected(int position) {
         setShareIntent(position);
+        if (mViewPager.findViewWithTag(mViewPager.getCurrentItem()) != null) {
+            if (mIsPageBarVisible) {
+                mViewPager.findViewWithTag(mViewPager.getCurrentItem()).findViewById(R.id.title_text_view)
+                        .setVisibility(View.VISIBLE);
+            } else {
+                mViewPager.findViewWithTag(mViewPager.getCurrentItem()).findViewById(R.id.title_text_view)
+                        .setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override
@@ -118,4 +151,61 @@ public class NineGagFullScreenActivity extends AppCompatActivity implements Load
 
     }
 
+    /**
+     * Shows the title bar on the top
+     */
+    private void showActionBar() {
+        mIsPageBarVisible = true;
+        mToolBar.animate().translationY(0).setInterpolator(new AccelerateInterpolator()).start();
+//        mHandler.postDelayed(mHideRunnable, 3000);
+        mAdapter.setTitleVisibility(mIsPageBarVisible);
+    }
+
+    private void hideActionBar() {
+        mIsPageBarVisible = false;
+        mToolBar.animate().translationY(-mToolBar.getBottom()).setInterpolator(new AccelerateInterpolator()).start();
+        mAdapter.setTitleVisibility(mIsPageBarVisible);
+    }
+
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent e) {
+//        mHandler.removeCallbacks(mHideRunnable);
+        if (mIsPageBarVisible) {
+            hideActionBar();
+            mViewPager.findViewWithTag(mViewPager.getCurrentItem()).findViewById(R.id.title_text_view)
+                    .setVisibility(View.GONE);
+        } else {
+            showActionBar();
+            mViewPager.findViewWithTag(mViewPager.getCurrentItem()).findViewById(R.id.title_text_view)
+                    .setVisibility(View.VISIBLE);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean onDoubleTap(MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public boolean onDoubleTapEvent(MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public boolean onLongClick(View v) {
+        //Launch the app or the webview activity
+//        http://9gag.com/gag/aD3EWjB?ref=android
+        String link = "http://9gag" + ".com/gag/" + v.getTag(R.id.key_id) + "?ref=android";
+        PackageManager pm = getPackageManager();
+        try {
+            pm.getPackageInfo(Constants.NINE_GAG_PKG_NAME, PackageManager.GET_ACTIVITIES);
+        } catch (PackageManager.NameNotFoundException e) {
+            startActivity(new Intent(this, WebViewActivity.class).putExtra("link", link)
+                    .putExtra("title", getString(R.string.nine_gag_post)));
+        } finally {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+        }
+        return true;
+    }
 }
