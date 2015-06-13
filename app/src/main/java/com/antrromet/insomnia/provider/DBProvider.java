@@ -21,15 +21,20 @@ public class DBProvider extends ContentProvider {
 
     public static final Uri URI_NINE_GAG = Uri.parse(URI_PREFIX + DBOpenHelper.NINE_GAG_TABLE_NAME);
     public static final Uri URI_FACEBOOK = Uri.parse(URI_PREFIX + DBOpenHelper.FACEBOOK_TABLE_NAME);
+    public static final Uri URI_INSTAGRAM = Uri.parse(URI_PREFIX + DBOpenHelper
+            .INSTAGRAM_TABLE_NAME);
 
     private static final int CONTENT_NINE_GAG = 101;
     private static final int CONTENT_FACEBOOK = 102;
+    private static final int CONTENT_INSTAGRAM = 103;
 
     static {
         URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.NINE_GAG_TABLE_NAME,
                 CONTENT_NINE_GAG);
         URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.FACEBOOK_TABLE_NAME,
                 CONTENT_FACEBOOK);
+        URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.INSTAGRAM_TABLE_NAME,
+                CONTENT_INSTAGRAM);
     }
 
     private DBOpenHelper dbHelper;
@@ -44,8 +49,10 @@ public class DBProvider extends ContentProvider {
 
         if (contentType == CONTENT_NINE_GAG) {
             return DBOpenHelper.NINE_GAG_TABLE_NAME;
-        }else if (contentType == CONTENT_FACEBOOK) {
+        } else if (contentType == CONTENT_FACEBOOK) {
             return DBOpenHelper.FACEBOOK_TABLE_NAME;
+        } else if (contentType == CONTENT_INSTAGRAM) {
+            return DBOpenHelper.INSTAGRAM_TABLE_NAME;
         }
 
         return null;

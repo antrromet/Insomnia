@@ -8,6 +8,7 @@ import android.support.v7.widget.Toolbar;
 import com.antrromet.insomnia.adapters.MainViewPagerAdapter;
 import com.antrromet.insomnia.fragments.BaseFragment;
 import com.antrromet.insomnia.fragments.FacebookFragment;
+import com.antrromet.insomnia.fragments.InstagramFragment;
 import com.antrromet.insomnia.fragments.NineGagFragment;
 import com.antrromet.insomnia.interfaces.OnTabClickListener;
 import com.antrromet.insomnia.widgets.SlidingTabLayout;
@@ -55,6 +56,9 @@ public class MainActivity extends BaseActivity implements OnTabClickListener {
                         break;
                     case 1:
                         ((FacebookFragment) fragment).onTabClicked();
+                        break;
+                    case 3:
+                        ((InstagramFragment) fragment).onTabClicked();
                         break;
                 }
             }

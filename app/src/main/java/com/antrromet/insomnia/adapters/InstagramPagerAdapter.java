@@ -13,17 +13,17 @@ import com.antrromet.insomnia.provider.DBOpenHelper;
 import com.antrromet.insomnia.widgets.TouchImageView;
 import com.squareup.picasso.Picasso;
 
-public class NineGagPagerAdapter extends PagerAdapter {
+public class InstagramPagerAdapter extends PagerAdapter {
 
 
     private final Context mContext;
-    private final View.OnClickListener mClickListener;
     private Cursor mCursor;
     private GestureDetector.OnDoubleTapListener mDoubleTapListener;
     private View.OnLongClickListener mLongClickListener;
     private boolean mIsTitleVisible;
+    private View.OnClickListener mClickListener;
 
-    public NineGagPagerAdapter(Object object) {
+    public InstagramPagerAdapter(Object object) {
         mContext = (Context) object;
         mDoubleTapListener = (GestureDetector.OnDoubleTapListener) object;
         mLongClickListener = (View.OnLongClickListener) object;
@@ -47,7 +47,7 @@ public class NineGagPagerAdapter extends PagerAdapter {
                 .content_image_view);
         contentImageView.setOnDoubleTapListener(mDoubleTapListener);
         Picasso.with(mContext).load(mCursor.getString(mCursor.getColumnIndex(DBOpenHelper
-                .COLUMN_IMAGE_NORMAL))).into(contentImageView);
+                .COLUMN_STANDARD_RES_IMAGE))).into(contentImageView);
         View textViewContent = view.findViewById(R.id.text_view_content);
         textViewContent.bringToFront();
         if (mIsTitleVisible) {
@@ -58,8 +58,8 @@ public class NineGagPagerAdapter extends PagerAdapter {
         textViewContent.setOnClickListener(mClickListener);
         view.setTag(position);
         contentImageView.setOnLongClickListener(mLongClickListener);
-        contentImageView.setTag(R.id.key_id, mCursor.getString(mCursor.getColumnIndex(DBOpenHelper
-                .COLUMN_ID)));
+        contentImageView.setTag(R.id.key_link, mCursor.getString(mCursor.getColumnIndex(DBOpenHelper
+                .COLUMN_LINK)));
         container.addView(view, 0);
         return view;
     }
@@ -80,11 +80,6 @@ public class NineGagPagerAdapter extends PagerAdapter {
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
         container.removeView((View) object);
-    }
-
-    public String getShareText(int pos) {
-        mCursor.moveToPosition(pos);
-        return mCursor.getString(mCursor.getColumnIndex(DBOpenHelper.COLUMN_CAPTION)) + " " + mCursor.getString(mCursor.getColumnIndex(DBOpenHelper.COLUMN_LINK));
     }
 
     public void setTitleVisibility(boolean isTitleVisible) {

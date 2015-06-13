@@ -25,5 +25,6 @@
     <string name="instagram_client_id">6e839d99ef9b40f387890a66c3e0fb0e</string>
     <string name="instagram_redirect_uri">http://antrromet.com</string>
     <string name="instagram_failed_login">Failed to login into Instagram. Please try again</string>
+    <string name="instagram_post">Instagram Post</string>
 
 </resources>

@@ -35,6 +35,11 @@
             android:screenOrientation="portrait"/>
 
         <activity
+            android:name=".InstagramFullScreenActivity"
+            android:label="@string/post"
+            android:screenOrientation="portrait"/>
+
+        <activity
             android:name=".WebViewActivity"
             android:label="@string/web_view_activity_title"
             android:screenOrientation="portrait"/>

@@ -43,6 +43,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
                 .OnItemLongClickListener {
 
     private static final String TAG = NineGagFragment.class.getSimpleName();
+    private static final String NINE_GAG_PKG_NAME = "com.ninegag.android.app";
     private NineGagRecyclerAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private SwipeRefreshLayout mSwipeRefreshLayout;
@@ -264,8 +265,8 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
     }
 
     /**
-     * Is called when clicked on tab the second time, when the user is already present in the tab
-     */
+         * Is called when clicked on tab the second time, when the user is already present in the tab
+         */
     public void onTabClicked() {
         mRecyclerView.smoothScrollToPosition(0);
     }
@@ -307,7 +308,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
         String link = "http://9gag" + ".com/gag/" + id + "?ref=android";
         PackageManager pm = getActivity().getPackageManager();
         try {
-            pm.getPackageInfo(Constants.NINE_GAG_PKG_NAME, PackageManager.GET_ACTIVITIES);
+            pm.getPackageInfo(NINE_GAG_PKG_NAME, PackageManager.GET_ACTIVITIES);
         } catch (PackageManager.NameNotFoundException e) {
             startActivity(new Intent(getActivity(), WebViewActivity.class).putExtra("link", link)
                     .putExtra("title", getString(R.string.nine_gag_post)));

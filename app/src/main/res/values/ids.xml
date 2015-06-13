@@ -3,5 +3,6 @@
 
     <item name="key_id" type="id"/>
     <item name="key_pos" type="id"/>
+    <item name="key_link" type="id"/>
 
 </resources>

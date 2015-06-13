@@ -16,6 +16,7 @@ public class DBOpenHelper extends SQLiteOpenHelper {
 
     public static final String NINE_GAG_TABLE_NAME = "nine_gag";
     public static final String FACEBOOK_TABLE_NAME = "facebook";
+    public static final String INSTAGRAM_TABLE_NAME = "instagram";
 
     public static final String COLUMN_ID = "id";
     public static final String COLUMN_INSERTION_TIME = "insertion_time";
@@ -31,6 +32,11 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public static final String COLUMN_TYPE = "type";
     public static final String COLUMN_STATUS_TYPE = "status_type";
     public static final String COLUMN_CREATED_TIME = "created_time";
+    public static final String COLUMN_LIKES_COUNT = "likes_count";
+    public static final String COLUMN_USERNAME = "username";
+    public static final String COLUMN_FULL_NAME = "full_name";
+    public static final String COLUMN_PROFILE_PICTURE = "profile_picture";
+    public static final String COLUMN_STANDARD_RES_IMAGE = "standard_Res_image";
 
     private static final String TEXT = " text, ";
     private static final String INTEGER = " integer, ";
@@ -45,11 +51,20 @@ public class DBOpenHelper extends SQLiteOpenHelper {
 
     private static final String FACEBOOK_TABLE_BUILDER = "create table " + FACEBOOK_TABLE_NAME +
             "(" + BaseColumns._ID + " integer primary key, " + COLUMN_ID + INTEGER + COLUMN_FROM
-            + TEXT + COLUMN_TO + TEXT+ COLUMN_MESSAGE + TEXT + COLUMN_PICTURE + TEXT +
+            + TEXT + COLUMN_TO + TEXT + COLUMN_MESSAGE + TEXT + COLUMN_PICTURE + TEXT +
             COLUMN_LINK + TEXT + COLUMN_TYPE + TEXT + TEXT + COLUMN_STATUS_TYPE + TEXT +
             COLUMN_CREATED_TIME + INTEGER + " unique(" + COLUMN_ID + ") on conflict replace);";
     private static final String FACEBOOK_TABLE_DESTROYER = "drop table " + DBProvider.DB_NAME + "" +
             "." + FACEBOOK_TABLE_NAME + ";";
+
+    private static final String INSTAGRAM_TABLE_BUILDER = "create table " + INSTAGRAM_TABLE_NAME +
+            "(" + BaseColumns._ID + " integer primary key, " + COLUMN_ID + TEXT + COLUMN_TYPE +
+            TEXT + COLUMN_CREATED_TIME + INTEGER + COLUMN_LINK + TEXT + COLUMN_LIKES_COUNT +
+            INTEGER + COLUMN_CAPTION + TEXT + COLUMN_USERNAME + TEXT + COLUMN_FULL_NAME + TEXT
+            + COLUMN_PROFILE_PICTURE + TEXT + COLUMN_STANDARD_RES_IMAGE + TEXT + " unique(" +
+            COLUMN_ID + ") on conflict replace);";
+    private static final String INSTAGRAM_TABLE_DESTROYER = "drop table " + DBProvider.DB_NAME +
+            "" + "." + INSTAGRAM_TABLE_NAME + ";";
 
     public DBOpenHelper(final Context context, final String name,
                         final CursorFactory factory, final int version) {
@@ -60,12 +75,14 @@ public class DBOpenHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(NINE_GAG_TABLE_BUILDER);
         db.execSQL(FACEBOOK_TABLE_BUILDER);
+        db.execSQL(INSTAGRAM_TABLE_BUILDER);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL(NINE_GAG_TABLE_DESTROYER);
         db.execSQL(FACEBOOK_TABLE_DESTROYER);
+        db.execSQL(INSTAGRAM_TABLE_DESTROYER);
         onCreate(db);
     }
 
