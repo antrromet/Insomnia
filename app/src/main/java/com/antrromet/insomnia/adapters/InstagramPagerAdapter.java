@@ -86,4 +86,9 @@ public class InstagramPagerAdapter extends PagerAdapter {
         mIsTitleVisible = isTitleVisible;
         notifyDataSetChanged();
     }
+
+    public String getShareText(int pos) {
+        mCursor.moveToPosition(pos);
+        return mCursor.getString(mCursor.getColumnIndex(DBOpenHelper.COLUMN_LINK));
+    }
 }

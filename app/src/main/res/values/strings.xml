@@ -6,7 +6,7 @@
     <string name="error_parsing_feeds">There was an error parsing the feeds&#8230;Please try again</string>
     <string name="successfully_logged_in">Successfully logged in!</string>
     <string name="no_load_more">There is nothing to load more Insomniac! Time for you to
-        sleep</string>
+        go to bed</string>
     <string name="post">Post</string>
     <string name="share">Share</string>
     <string name="web_view_activity_title">WebView Activity</string>

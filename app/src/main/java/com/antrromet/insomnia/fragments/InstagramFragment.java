@@ -51,6 +51,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
     private LinearLayoutManager mLayoutManager;
     private String mAccessToken;
     private boolean mFetchDataAgain;
+    private boolean mIsManualRefresh;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle
@@ -147,15 +148,23 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
     private void requestFeeds(String maxId) {
         mSwipeRefreshLayout.setEnabled(false);
         mSwipeRefreshLayout.setRefreshing(true);
-        requestVolley(Constants.VolleyTags.INSTAGRAM_FEEDS, Request.Method.GET, TextUtils.isEmpty
-                (maxId) ? String.format(Constants.Urls.INSTAGRAM_FEEDS.link, mAccessToken) :
-                String.format(Constants.Urls.INSTAGRAM_FEEDS_LOAD_MORE.link, mAccessToken, maxId)
-                , null, null);
+        if (TextUtils.isEmpty(maxId)) {
+            requestVolley(Constants.VolleyTags.INSTAGRAM_FEEDS, Request.Method.GET, String.format
+                    (Constants.Urls.INSTAGRAM_FEEDS.link, mAccessToken), null, null);
+        } else {
+            requestVolley(Constants.VolleyTags.INSTAGRAM_FEEDS_LOAD_MORE, Request.Method.GET,
+                    String.format(Constants.Urls.INSTAGRAM_FEEDS_LOAD_MORE.link, mAccessToken, maxId)
+                    , null, null);
+        }
+
     }
 
     @Override
     public void onRefresh() {
-        requestFeeds(null);
+        if (isNetworkAvailable()) {
+            mIsManualRefresh = true;
+            requestFeeds(null);
+        }
     }
 
     @Override
@@ -164,9 +173,10 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
             // Stop the animation and insert the data into DB
             mSwipeRefreshLayout.setEnabled(true);
             mSwipeRefreshLayout.setRefreshing(false);
-            if (tag == Constants.VolleyTags.INSTAGRAM_FEEDS) {
+            if (tag == Constants.VolleyTags.INSTAGRAM_FEEDS || tag == Constants.VolleyTags
+                    .INSTAGRAM_FEEDS_LOAD_MORE) {
                 if (responseObject != null) {
-                    insertFeedsInDb((JSONObject) responseObject);
+                    insertFeedsInDb((JSONObject) responseObject, tag.equals(Constants.VolleyTags.INSTAGRAM_FEEDS_LOAD_MORE));
                     getActivity().getSupportLoaderManager().restartLoader(Constants.Loaders
                             .INSTAGRAM_FEEDS.id, null, this);
                 }
@@ -185,7 +195,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
      *
      * @param responseObject jsonObject response that we get from the server
      */
-    private void insertFeedsInDb(JSONObject responseObject) {
+    private void insertFeedsInDb(JSONObject responseObject, boolean isLoadMore) {
         // Parsing through the feeds
         JSONArray feedsArray = JSONUtils.optJSONArray(responseObject, Constants.ApiKeys.DATA
                 .key);
@@ -251,7 +261,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
 
                 String oldNextMaxId = PreferencesManager.getString(getActivity(), Constants
                         .APP_PREFERENCES, Constants.SharedPreferenceKeys.INSTAGRAM_NEXT_MAX_ID);
-                checkCache(ids, oldNextMaxId, newNextMaxId);
+                checkCache(ids, oldNextMaxId, newNextMaxId, isLoadMore);
                 // Insert in the cache
                 getActivity().getContentResolver().bulkInsert(DBProvider.URI_INSTAGRAM, values);
 
@@ -262,6 +272,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
                     requestFeeds(newNextMaxId);
                 }
             }
+            mIsManualRefresh = false;
         }
 
     }
@@ -272,13 +283,14 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
      * Otherwise the timeline time would be messed up, since on load more will be called after
      * fresh data that is going to be added and the previous old data.
      */
-    private void checkCache(String[] ids, String oldNextMaxId, String newNextMaxId) {
+    private void checkCache(String[] ids, String oldNextMaxId, String newNextMaxId, boolean
+            isLoadMore) {
         Cursor cursor = getActivity().getContentResolver().query(DBProvider.URI_INSTAGRAM, new
                 String[]{DBOpenHelper.COLUMN_ID}, DBOpenHelper.COLUMN_ID + " in (" +
                 makePlaceholders(ids.length) + ")", ids, null);
         boolean isDataIntersecting = false;
         mFetchDataAgain = false;
-        if (cursor != null) {
+        if (!mIsManualRefresh && cursor != null) {
             int count = cursor.getCount();
             if (count > 0) {
                 isDataIntersecting = true;
@@ -289,7 +301,7 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
             }
             cursor.close();
         }
-        if (!isDataIntersecting) {
+        if (!mIsManualRefresh && !isDataIntersecting && !isLoadMore) {
             //Clear the DB
             Logger.e(TAG, "Clearing the Instagram cache");
             getActivity().getContentResolver().delete(DBProvider.URI_INSTAGRAM, null, null);
@@ -370,6 +382,6 @@ public class InstagramFragment extends BaseFragment implements View.OnClickListe
      * Is called when clicked on tab the second time, when the user is already present in the tab
      */
     public void onTabClicked() {
-        mRecyclerView.smoothScrollToPosition(0);
+        mLayoutManager.scrollToPositionWithOffset(0, 0);
     }
 }

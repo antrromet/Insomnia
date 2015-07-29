@@ -11,10 +11,10 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
+import android.view.ViewGroup;
 
 import com.antrromet.insomnia.R;
 import com.antrromet.insomnia.fragments.BaseFragment;
-import com.antrromet.insomnia.fragments.FacebookFragment;
 import com.antrromet.insomnia.fragments.InstagramFragment;
 import com.antrromet.insomnia.fragments.NineGagFragment;
 import com.antrromet.insomnia.fragments.TwitterFragment;
@@ -33,13 +33,13 @@ public class MainViewPagerAdapter extends FragmentStatePagerAdapter {
 
     public MainViewPagerAdapter(FragmentManager fragmentManager, Context context) {
         super(fragmentManager);
-        fragments = new SparseArray<>(4);
+        fragments = new SparseArray<>(3);
         mContext = context;
     }
 
     @Override
     public int getCount() {
-        return 4;
+        return 3;
     }
 
     @Override
@@ -55,21 +55,21 @@ public class MainViewPagerAdapter extends FragmentStatePagerAdapter {
                     break;
                 }
 
+//                case 1: {
+//                    fragment = new FacebookFragment();
+//                    fragments.put(1, fragment);
+//                    break;
+//                }
+
                 case 1: {
-                    fragment = new FacebookFragment();
+                    fragment = new TwitterFragment();
                     fragments.put(1, fragment);
                     break;
                 }
 
                 case 2: {
-                    fragment = new TwitterFragment();
-                    fragments.put(2, fragment);
-                    break;
-                }
-
-                case 3: {
                     fragment = new InstagramFragment();
-                    fragments.put(3, fragment);
+                    fragments.put(2, fragment);
                     break;
                 }
 
@@ -100,4 +100,8 @@ public class MainViewPagerAdapter extends FragmentStatePagerAdapter {
         return sb;
     }
 
+    @Override
+    public void destroyItem(ViewGroup container, int position, Object object) {
+        super.destroyItem(container, position, object);
+    }
 }

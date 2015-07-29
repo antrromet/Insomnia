@@ -10,10 +10,13 @@ import android.os.Handler;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ShareActionProvider;
 import android.support.v7.widget.Toolbar;
 import android.view.GestureDetector;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -34,6 +37,7 @@ public class InstagramFullScreenActivity extends AppCompatActivity implements Lo
     private HackyViewPager mViewPager;
     private Toolbar mToolBar;
     private boolean mIsContentVisible;
+    private ShareActionProvider mShareActionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,15 +74,6 @@ public class InstagramFullScreenActivity extends AppCompatActivity implements Lo
 
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         // This order should exactly be the same as the one in the Main Activity
         return new CursorLoader(this, DBProvider.URI_INSTAGRAM, null, null, null,
@@ -88,7 +83,9 @@ public class InstagramFullScreenActivity extends AppCompatActivity implements Lo
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         mAdapter.setCursor(data);
-        mViewPager.setCurrentItem(getIntent().getIntExtra("position", 0), false);
+        int pos = getIntent().getIntExtra("position", 0);
+        mViewPager.setCurrentItem(pos, false);
+        setShareIntent(pos);
     }
 
     @Override
@@ -117,6 +114,7 @@ public class InstagramFullScreenActivity extends AppCompatActivity implements Lo
 
     @Override
     public void onPageSelected(int position) {
+        setShareIntent(position);
         if (mViewPager.findViewWithTag(mViewPager.getCurrentItem()) != null) {
             if (mIsContentVisible) {
                 mViewPager.findViewWithTag(mViewPager.getCurrentItem()).findViewById(R.id.title_text_view)
@@ -199,5 +197,32 @@ public class InstagramFullScreenActivity extends AppCompatActivity implements Lo
     @Override
     public void onClick(View v) {
         showHideContent();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.share_menu_nine_gag, menu);
+        MenuItem item = menu.findItem(R.id.menu_item_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(item);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void setShareIntent(int pos) {
+        if (mShareActionProvider != null) {
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_TEXT, mAdapter.getShareText(pos));
+            shareIntent.setType("text/plain");
+            mShareActionProvider.setShareIntent(shareIntent);
+        }
     }
 }

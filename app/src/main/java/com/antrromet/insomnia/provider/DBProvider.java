@@ -23,10 +23,13 @@ public class DBProvider extends ContentProvider {
     public static final Uri URI_FACEBOOK = Uri.parse(URI_PREFIX + DBOpenHelper.FACEBOOK_TABLE_NAME);
     public static final Uri URI_INSTAGRAM = Uri.parse(URI_PREFIX + DBOpenHelper
             .INSTAGRAM_TABLE_NAME);
+    public static final Uri URI_TWITER = Uri.parse(URI_PREFIX + DBOpenHelper
+            .TWITTER_TABLE_NAME);
 
     private static final int CONTENT_NINE_GAG = 101;
     private static final int CONTENT_FACEBOOK = 102;
     private static final int CONTENT_INSTAGRAM = 103;
+    private static final int CONTENT_TWITTER = 104;
 
     static {
         URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.NINE_GAG_TABLE_NAME,
@@ -35,6 +38,8 @@ public class DBProvider extends ContentProvider {
                 CONTENT_FACEBOOK);
         URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.INSTAGRAM_TABLE_NAME,
                 CONTENT_INSTAGRAM);
+        URI_MATCHER.addURI(AUTHORITY, DBOpenHelper.TWITTER_TABLE_NAME,
+                CONTENT_TWITTER);
     }
 
     private DBOpenHelper dbHelper;
@@ -53,6 +58,8 @@ public class DBProvider extends ContentProvider {
             return DBOpenHelper.FACEBOOK_TABLE_NAME;
         } else if (contentType == CONTENT_INSTAGRAM) {
             return DBOpenHelper.INSTAGRAM_TABLE_NAME;
+        } else if (contentType == CONTENT_TWITTER) {
+            return DBOpenHelper.TWITTER_TABLE_NAME;
         }
 
         return null;

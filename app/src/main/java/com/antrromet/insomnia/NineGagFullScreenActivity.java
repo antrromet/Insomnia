@@ -98,7 +98,9 @@ public class NineGagFullScreenActivity extends AppCompatActivity implements Load
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         mAdapter.setCursor(data);
-        mViewPager.setCurrentItem(getIntent().getIntExtra("position", 0), false);
+        int pos = getIntent().getIntExtra("position", 0);
+        mViewPager.setCurrentItem(pos, false);
+        setShareIntent(pos);
     }
 
     @Override
@@ -171,7 +173,7 @@ public class NineGagFullScreenActivity extends AppCompatActivity implements Load
 
     @Override
     public boolean onSingleTapConfirmed(MotionEvent e) {
-
+        showHideContent();
         return false;
     }
 

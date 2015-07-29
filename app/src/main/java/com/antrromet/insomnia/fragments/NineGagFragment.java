@@ -268,7 +268,7 @@ public class NineGagFragment extends BaseFragment implements OnVolleyResponseLis
          * Is called when clicked on tab the second time, when the user is already present in the tab
          */
     public void onTabClicked() {
-        mRecyclerView.smoothScrollToPosition(0);
+        mLayoutManager.scrollToPositionWithOffset(0, 0);
     }
 
     @Override

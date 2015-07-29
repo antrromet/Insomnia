@@ -10,7 +10,7 @@ public class Constants {
      */
     public enum Loaders {
 
-        NINE_GAG_FEEDS(100), FACEBOOK_FEEDS(101), INSTAGRAM_FEEDS(102);
+        NINE_GAG_FEEDS(100), FACEBOOK_FEEDS(101), INSTAGRAM_FEEDS(102), TWITTER_FEEDS(103);
 
         public final int id;
 
@@ -24,7 +24,8 @@ public class Constants {
      */
     public enum VolleyTags {
 
-        NINE_GAG_FEEDS("nine_gag_feeds"), INSTAGRAM_FEEDS("instagram_feeds");
+        NINE_GAG_FEEDS("nine_gag_feeds"), INSTAGRAM_FEEDS("instagram_feeds"),
+        INSTAGRAM_FEEDS_LOAD_MORE("instagram_feeds_load_more");
 
         public final String tag;
 

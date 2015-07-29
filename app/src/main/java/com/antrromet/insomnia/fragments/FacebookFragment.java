@@ -52,6 +52,9 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
     private SwipeRefreshLayout mSwipeRefreshLayout;
     private CallbackManager mCallbackManager;
     private AccessToken mAccessToken;
+    private LinearLayoutManager mLayoutManager;
+    private boolean mFetchDataAgain;
+    private boolean mIsManualRefresh;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -68,11 +71,11 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
 
         // Setting up the Recycler View
         mRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        mRecyclerView.setLayoutManager(layoutManager);
+        mLayoutManager = new LinearLayoutManager(getActivity());
+        mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new FacebookRecyclerAdapter(getActivity());
         mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setOnScrollListener(new EndlessRecyclerOnScrollListener(layoutManager) {
+        mRecyclerView.setOnScrollListener(new EndlessRecyclerOnScrollListener(mLayoutManager) {
             @Override
             public void onLoadMore(int current_page) {
                 requestFeed(true);
@@ -124,7 +127,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
     /**
      * Request the required info from the FB graph API
      */
-    private void requestFeed(boolean isNextPage) {
+    private void requestFeed(final boolean isNextPage) {
         if (isNetworkAvailable()) {
             mSwipeRefreshLayout.setEnabled(false);
             mSwipeRefreshLayout.setRefreshing(true);
@@ -152,6 +155,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
 
                 @Override
                 public void onCompleted(GraphResponse graphResponse) {
+                    mIsManualRefresh = false;
                     mSwipeRefreshLayout.setEnabled(true);
                     mSwipeRefreshLayout.setRefreshing(false);
                     if (getActivity() != null) {
@@ -168,7 +172,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
                         } else {
                             JSONObject responseObject = graphResponse.getJSONObject();
                             if (responseObject != null) {
-                                insertFeedsIntoDb(responseObject);
+                                insertFeedsIntoDb(responseObject, isNextPage);
                                 getActivity().getSupportLoaderManager().restartLoader(Constants.Loaders
                                         .FACEBOOK_FEEDS.id, null, FacebookFragment.this);
                             }
@@ -182,7 +186,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
     /**
      * Insert the Facebook feeds in the Database
      */
-    private void insertFeedsIntoDb(JSONObject responseObject) {
+    private void insertFeedsIntoDb(JSONObject responseObject, boolean isLoadMore) {
         // Parsing through the feeds
         JSONArray feedsArray = JSONUtils.optJSONArray(responseObject, Constants.ApiKeys.DATA
                 .key);
@@ -232,26 +236,26 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
                 }
             }
 
-            // Check for the deletion of cache only when its a new first time request
-            String nextPageId = PreferencesManager.getString(getActivity(), Constants
-                    .APP_PREFERENCES, Constants.SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID);
-            if (TextUtils.isEmpty(nextPageId)) {
-                checkCache(ids);
-            }
-
-            getActivity().getContentResolver().bulkInsert(DBProvider.URI_FACEBOOK, values);
-
-            // Storing the next paging id in Preferences
             JSONObject pagingObject = JSONUtils.optJSONObject(responseObject, Constants.ApiKeys
                     .PAGING.key);
             if (pagingObject != null) {
                 JSONObject cursorsObject = JSONUtils.optJSONObject(pagingObject, Constants.ApiKeys
                         .CURSORS.key);
                 if (cursorsObject != null) {
-                    String afterPageId = JSONUtils.optString(cursorsObject, Constants.ApiKeys.AFTER
+                    String newAfterPageId = JSONUtils.optString(cursorsObject, Constants.ApiKeys
+                            .AFTER
                             .key);
+                    String oldAfterPageId = PreferencesManager.getString(getActivity(), Constants
+                            .APP_PREFERENCES, Constants.SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID);
+                    checkCache(ids, oldAfterPageId, newAfterPageId, isLoadMore);
+                    // Insert in the cache
+                    getActivity().getContentResolver().bulkInsert(DBProvider.URI_FACEBOOK, values);
                     PreferencesManager.set(getActivity(), Constants.APP_PREFERENCES, Constants
-                            .SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID, afterPageId);
+                            .SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID, newAfterPageId);
+                    if (mFetchDataAgain) {
+                        Logger.e(TAG, "Auto fetching next set of data!");
+                        requestFeed(true);
+                    }
                 }
             }
         }
@@ -264,23 +268,30 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
      * Otherwise the timeline time would be messed up, since on load more will be called after
      * fresh data that is going to be added and the previous old data.
      */
-    private void checkCache(String[] ids) {
-        Cursor cursor = getActivity().getContentResolver().query(DBProvider.URI_FACEBOOK, new
+    private void checkCache(String[] ids, String oldNextMaxId, String newNextMaxId, boolean
+            isLoadMore) {
+        Cursor cursor = getActivity().getContentResolver().query(DBProvider.URI_INSTAGRAM, new
                 String[]{DBOpenHelper.COLUMN_ID}, DBOpenHelper.COLUMN_ID + " in (" +
                 makePlaceholders(ids.length) + ")", ids, null);
         boolean isDataIntersecting = false;
-        if (cursor != null) {
-            if (cursor.getCount() > 0) {
+        mFetchDataAgain = false;
+        if (!mIsManualRefresh && cursor != null) {
+            int count = cursor.getCount();
+            if (count > 0) {
                 isDataIntersecting = true;
+                if (oldNextMaxId != null && newNextMaxId != null && !oldNextMaxId.equals
+                        (newNextMaxId)) {
+                    mFetchDataAgain = true;
+                }
             }
             cursor.close();
         }
-        if (!isDataIntersecting) {
+        if (!mIsManualRefresh && !isDataIntersecting && !isLoadMore) {
             //Clear the DB
-            Logger.e(TAG, "Clearing the Facebook cache");
-            getActivity().getContentResolver().delete(DBProvider.URI_FACEBOOK, null, null);
+            Logger.e(TAG, "Clearing the Instagram cache");
+            getActivity().getContentResolver().delete(DBProvider.URI_INSTAGRAM, null, null);
             PreferencesManager.set(getActivity(), Constants.APP_PREFERENCES, Constants
-                    .SharedPreferenceKeys.FACEBOOK_AFTER_PAGE_ID, null);
+                    .SharedPreferenceKeys.INSTAGRAM_NEXT_MAX_ID, null);
         }
     }
 
@@ -347,7 +358,10 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
 
     @Override
     public void onRefresh() {
-        requestFeed(false);
+        if (isNetworkAvailable()) {
+            mIsManualRefresh = true;
+            requestFeed(false);
+        }
     }
 
     @Override
@@ -360,7 +374,7 @@ public class FacebookFragment extends BaseFragment implements LoaderManager
      * Is called when clicked on tab the second time, when the user is already present in the tab
      */
     public void onTabClicked() {
-        mRecyclerView.smoothScrollToPosition(0);
+        mLayoutManager.scrollToPositionWithOffset(0, 0);
     }
 
     @Override
